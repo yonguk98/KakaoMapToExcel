@@ -5,11 +5,11 @@ build/
 !**/src/test/**/build/
 
 .env
-/logs/
-/gradle/
-/META-INF/
 .idea/
-검색결과.xlsx
+logs/
+gradle/
+META-INF/
+results/
 
 ### IntelliJ IDEA ###
 .idea/modules.xml

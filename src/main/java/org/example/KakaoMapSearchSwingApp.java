@@ -260,7 +260,10 @@ public class KakaoMapSearchSwingApp extends JFrame {
                 }
             }
 
-            try (FileOutputStream out = new FileOutputStream("검색결과.xlsx")) {
+            String fileName = "results/" + currentKeyword + " 검색결과.xlsx";
+            java.io.File resultsDir = new java.io.File("results");
+            if (!resultsDir.exists()) resultsDir.mkdirs();
+            try (FileOutputStream out = new FileOutputStream(fileName)) {
                 workbook.write(out);
             }
 
