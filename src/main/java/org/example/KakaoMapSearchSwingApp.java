@@ -23,6 +23,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -38,6 +39,7 @@ public class KakaoMapSearchSwingApp extends JFrame {
     private int maxPage = 0;
     private boolean isEnd = false;
     private final List<String[]> allResults = new ArrayList<>();
+    private final List<HashMap<String, String>> allResultsMap = new ArrayList<>();
     private String currentKeyword = "";
     private final int slice = 15;
 
@@ -86,6 +88,7 @@ public class KakaoMapSearchSwingApp extends JFrame {
         page = 1;
         maxPage = 0;
         allResults.clear();
+        allResultsMap.clear();
         currentKeyword = "";
     }
 
@@ -148,21 +151,28 @@ public class KakaoMapSearchSwingApp extends JFrame {
             resultArea.append("\nis_end: " + meta.get("is_end").asText() + "\n");
 
             JsonNode docs = root.get("documents");
-            List<CompletableFuture<String[]>> futures = new ArrayList<>();
+            List<CompletableFuture<HashMap<String,String>>> futures = new ArrayList<>();
             for (JsonNode doc : docs) {
                 futures.add(CompletableFuture.supplyAsync(() -> {
-                    String name = doc.get("place_name").asText();
                     String addr = doc.get("address_name").asText();
                     String road = doc.get("road_address_name").asText();
-                    String zipNo = road.isEmpty() ? searchZipNo(addr) : searchZipNo(road);
 
-                    return new String[]{name, zipNo, addr, road};
+                    HashMap<String, String> map = new HashMap<>();
+                    map.put("name", doc.get("place_name").asText());
+                    map.put("addr", doc.get("address_name").asText());
+                    map.put("road", doc.get("road_address_name").asText());
+                    map.put("zipNo", road.isEmpty() ? searchZipNo(addr) : searchZipNo(road));
+                    return map;
                 }));
             }
-            for (CompletableFuture<String[]> future : futures) {
+            for (CompletableFuture<HashMap<String,String>> future : futures) {
                 try {
-                    allResults.add(future.get());
-                    resultArea.append("[" + future.get()[0] + "]\n우편번호: " + future.get()[1] + "\n지번: " + future.get()[1] + "\n도로명: " + future.get()[3] + "\n\n");
+                    allResultsMap.add(future.get());
+                    resultArea.append("[" + future.get().get("name") + "]"
+                            +"\n우편번호: " + future.get().get("zipNo")
+                            + "\n지번: " + future.get().get("addr")
+                            + "\n도로명: " + future.get().get("road")
+                            + "\n\n");
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -182,19 +192,19 @@ public class KakaoMapSearchSwingApp extends JFrame {
             return;
         }
 
-        if(allResults.isEmpty()){
+        if(allResultsMap.isEmpty()){
             return;
         }
 
         resultArea.setText("");
         for (int i = (targetPage - 1) * slice; i < targetPage * slice; i++) {
-            String[] result = allResults.get(i);
-            String name = result[0];
-            String zipNo = result[1];
-            String addr = result[2];
-            String road = result[3];
-
-            resultArea.append("[" + name + "]\n지번: " + addr + "\n도로명: " + road + "\n우편번호: " + zipNo + "\n\n");
+            HashMap<String, String> map = allResultsMap.get(i);
+            map.get("name");
+            resultArea.append("[" + map.get("name") + "]"
+                    +"\n우편번호: " + map.get("zipNo")
+                    + "\n지번: " + map.get("addr")
+                    + "\n도로명: " + map.get("road")
+                    + "\n\n");
         }
 
         page = targetPage;
@@ -217,11 +227,11 @@ public class KakaoMapSearchSwingApp extends JFrame {
         }
 
         try {
-                Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder()
-                        .parse(new ByteArrayInputStream(response.body().getBytes(StandardCharsets.UTF_8)));
+            Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder()
+                    .parse(new ByteArrayInputStream(response.body().getBytes(StandardCharsets.UTF_8)));
 
-                NodeList list = doc.getElementsByTagName("zipNo");
-                return list.item(0).getTextContent();
+            NodeList list = doc.getElementsByTagName("zipNo");
+            return list.item(0).getTextContent();
         } catch (Exception e) {
             LogUtil.logError("우편번호 검색 결과 파싱 중 오류발생: " , e);
             return "";
