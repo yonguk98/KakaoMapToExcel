@@ -38,7 +38,6 @@ public class KakaoMapSearchSwingApp extends JFrame {
     private int page = 1;
     private int maxPage = 0;
     private boolean isEnd = false;
-    private final List<String[]> allResults = new ArrayList<>();
     private final List<HashMap<String, String>> allResultsMap = new ArrayList<>();
     private String currentKeyword = "";
     private final int slice = 15;
@@ -87,7 +86,6 @@ public class KakaoMapSearchSwingApp extends JFrame {
         isEnd = false;
         page = 1;
         maxPage = 0;
-        allResults.clear();
         allResultsMap.clear();
         currentKeyword = "";
     }
@@ -239,7 +237,7 @@ public class KakaoMapSearchSwingApp extends JFrame {
     }
     //TODO: allResult를 해쉬맵으로 바꿔서 순서에 자유롭게 만들기
     private void saveToExcel() {
-        if (allResults.isEmpty()) {
+        if (allResultsMap.isEmpty()) {
             show("저장할 데이터가 없습니다.");
             return;
         }
@@ -254,10 +252,11 @@ public class KakaoMapSearchSwingApp extends JFrame {
             header.createCell(2).setCellValue("지번주소");
             header.createCell(3).setCellValue("도로명주소");
 
-            for (String[] row : allResults) {
+            for (HashMap<String,String> row : allResultsMap) {
                 Row r = sheet.createRow(rowNum++);
-                for (int i = 0; i < row.length; i++) {
-                    r.createCell(i).setCellValue(row[i]);
+                String[] key = {"name","zipNo", "addr", "road"};
+                for (int i = 0; i < key.length; i++) {
+                    r.createCell(i).setCellValue(row.get(key[i]));
                 }
             }
 
