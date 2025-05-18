@@ -1,0 +1,35 @@
+plugins {
+    id 'java'
+    id 'com.github.johnrengelman.shadow' version '8.1.1' // shadow plugin
+}
+group = 'org.example'
+version = '1.0'
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+jar {
+    manifest {
+        attributes(
+                'Main-Class': 'org.example.Main'
+        )
+    }
+}
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation "org.apache.poi:poi-ooxml:5.4.0"
+    implementation "com.fasterxml.jackson.core:jackson-databind:2.19.0"
+
+    testImplementation platform('org.junit:junit-bom:5.10.0')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+
+    implementation 'io.github.cdimascio:dotenv-java:3.2.0'
+}
+
+test {
+    useJUnitPlatform()
+}
