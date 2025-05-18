@@ -32,6 +32,7 @@ public class KakaoMapSearchSwingApp extends JFrame {
     private final JButton previousPageButton = new JButton("이전 페이지");
     private final JButton nextPageButton = new JButton("다음 페이지");
     private final JButton saveButton = new JButton("엑셀로 저장");
+
     private int page = 1;
     private int maxPage = 0;
     private boolean isEnd = false;
