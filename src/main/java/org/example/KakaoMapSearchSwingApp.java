@@ -24,6 +24,7 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 public class KakaoMapSearchSwingApp extends JFrame {
     private final JTextField keywordField = new JTextField();
@@ -143,22 +144,27 @@ public class KakaoMapSearchSwingApp extends JFrame {
 
             JsonNode meta = root.get("meta");
             isEnd = meta.get("is_end").asText().equals("true");
-
             resultArea.append("page: " + targetPage + "\ntotal_count: " + meta.get("total_count").asText());
             resultArea.append("\nis_end: " + meta.get("is_end").asText() + "\n");
 
             JsonNode docs = root.get("documents");
-
+            List<CompletableFuture<String[]>> futures = new ArrayList<>();
             for (JsonNode doc : docs) {
-                String name = doc.get("place_name").asText();
-                String addr = doc.get("address_name").asText();
-                String road = doc.get("road_address_name").asText();
-                String zipNo = road.isEmpty() ? searchZipNo(addr) : searchZipNo(road);
+                futures.add(CompletableFuture.supplyAsync(() -> {
+                    String name = doc.get("place_name").asText();
+                    String addr = doc.get("address_name").asText();
+                    String road = doc.get("road_address_name").asText();
+                    String zipNo = road.isEmpty() ? searchZipNo(addr) : searchZipNo(road);
 
-                resultArea.append("[" + name + "]\n지번: " + addr + "\n도로명: " + road + "\n우편번호: " + zipNo + "\n\n");
-
-                if (targetPage > maxPage) {
-                    allResults.add(new String[]{name, zipNo, addr, road});
+                    return new String[]{name, zipNo, addr, road};
+                }));
+            }
+            for (CompletableFuture<String[]> future : futures) {
+                try {
+                    allResults.add(future.get());
+                    resultArea.append("[" + future.get()[0] + "]\n우편번호: " + future.get()[1] + "\n지번: " + future.get()[1] + "\n도로명: " + future.get()[3] + "\n\n");
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
             }
 
